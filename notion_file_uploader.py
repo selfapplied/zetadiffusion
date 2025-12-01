@@ -242,10 +242,13 @@ def find_related_files(validation_type: str, output_dir: Path) -> dict:
     """
     Find related report and plot files for a validation.
     
+    Note: Reports are documentation markdown files (not auto-generated).
+    Plots are auto-generated PNG files from validation runs.
+    
     Returns:
         {
-            'reports': [Path, ...],
-            'plots': [Path, ...]
+            'reports': [Path, ...],  # Documentation markdown files
+            'plots': [Path, ...]     # Auto-generated plot images
         }
     """
     reports = []

@@ -9,8 +9,8 @@
 
 **All validation runs now automatically upload:**
 1. ✅ **Results JSON** - Validation data and metrics
-2. ✅ **Analysis Reports** - Markdown findings documents
-3. ✅ **Diagnostic Plots** - PNG visualizations
+2. ✅ **Diagnostic Plots** - Auto-generated PNG visualizations
+3. 📝 **Documentation Reports** - Markdown analysis documents (if present in repo)
 
 **No manual steps required** - everything happens automatically when using `validation_framework.run_validation()`.
 
