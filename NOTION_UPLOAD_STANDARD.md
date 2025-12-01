@@ -181,5 +181,24 @@ files = find_related_files("My Validation", Path(".out"))
 
 ---
 
+## Automatic Syncing
+
+**Three options for automatic Notion syncing:**
+
+1. **GitHub Actions** (recommended) - Auto-syncs on push
+   - File: `.github/workflows/notion-sync.yml`
+   - Setup: Add `NOTION_API_TOKEN` and `NOTION_VALIDATION_DB_ID` to GitHub Secrets
+
+2. **Post-commit hook** - Syncs immediately after commit
+   - File: `.git/hooks/post-commit` (already created)
+   - Just run: `chmod +x .git/hooks/post-commit`
+
+3. **File watcher** - Real-time sync during development
+   - Run: `python3 notion_sync_watcher.py &`
+
+**Recommendation:** Use GitHub Actions for automatic syncing on push.
+
+---
+
 **This is now the standard practice for all validation runs.**
 
