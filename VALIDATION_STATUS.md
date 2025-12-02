@@ -199,3 +199,6 @@ Formula systematically undercounts by factor ~2.5 at high n. Needs multiplicativ
 **Status:** Significant progress made. Core issues identified and partially resolved.  
 **Next Review:** After implementing bifurcation investigation and pole detection refinement.
 
+
+
+

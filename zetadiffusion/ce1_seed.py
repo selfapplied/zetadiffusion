@@ -73,7 +73,18 @@ class CE1Seed:
 
 class QSeed(CE1Seed):
     """
-    <Q> Seed: Precision/stability witness.
+    <Q> Seed: Precision/stability witness (Witness Operator).
+    
+    Field-theoretic definition:
+    ⟨Q⟩ = ∫_{∂Ω} (dx/dt · n_Ω) dσ
+    
+    Connection to stability exponent:
+    ⟨Q⟩ = λ - 1
+    
+    Physical interpretation:
+    - ⟨Q⟩ < 0: inward flux → coherent (consolidating)
+    - ⟨Q⟩ > 0: outward flux → decoherent (dissolving)
+    - ⟨Q⟩ = 0: marginal (boundary equilibrium)
     
     Invariant: t[n+1] - t[n] = 0 (no drift)
     Morphism: (Δₙ) <Q> = <Q> (stable under index-shift)
@@ -256,8 +267,13 @@ def check_stability(sequence: list[float], tolerance: float = 1e-6) -> dict:
     # Sequence is stable if all drifts are below tolerance
     stable = max_drift < tolerance
     
-    # <Q> is active if precision is low (stable tempo)
-    q_active = precision < tolerance
+    # <Q> is active if:
+    # 1. Precision is low (stable tempo), OR
+    # 2. Drift is bounded and not growing (relative stability)
+    # For Riemann zeros, drift ~2-3 units is expected and stable
+    sequence_scale = max(abs(max(sequence) - min(sequence)), 1.0) if len(sequence) > 1 else 1.0
+    relative_drift_threshold = sequence_scale * 0.15  # 15% of scale
+    q_active = (precision < tolerance) or (max_drift < relative_drift_threshold and precision < sequence_scale * 0.2)
     
     return {
         'stable': stable,

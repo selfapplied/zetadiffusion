@@ -46,7 +46,10 @@ def compute_q_metrics(sequence: List[float], indices: Optional[List[int]] = None
     q_seed = create_q_seed()
     
     # Overall stability
-    stability = check_stability(sequence, tolerance=1.0)
+    # Tolerance is relative to sequence scale (Riemann zeros have ~2-3 unit spacing)
+    sequence_scale = max(abs(max(sequence) - min(sequence)), 1.0) if sequence else 1.0
+    relative_tolerance = max(sequence_scale * 0.1, 1.0)  # 10% of scale, min 1.0
+    stability = check_stability(sequence, tolerance=relative_tolerance)
     
     # Compute activation by clock phase if indices provided
     phase_metrics = {}

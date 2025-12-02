@@ -143,3 +143,6 @@ The three-clock structure validates <Q> behavior:
 
 **<Q> is a precision seed - simple, gentle, elegant. A stabilizing witness that signals "no drift under index-shift."**
 
+
+
+

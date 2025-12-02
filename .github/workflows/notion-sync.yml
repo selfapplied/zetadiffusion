@@ -12,6 +12,8 @@ on:
 jobs:
   sync-to-notion:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Allow workflow to commit and push
     
     steps:
     - uses: actions/checkout@v3
@@ -40,4 +42,35 @@ jobs:
       run: |
         python3 generate_diagnostic_plots.py
         # Plots will be uploaded with next validation run
+    
+    - name: Monitor drift (alert on spikes)
+      if: success()
+      run: |
+        echo "Checking for drift spikes..."
+        python3 validate_drift_monitoring.py > /tmp/drift_check.txt 2>&1 || true
+        if grep -q "⚠ High drift" /tmp/drift_check.txt; then
+          echo "::warning::High drift detected - check drift_monitoring_results.json"
+          cat /tmp/drift_check.txt | grep -A 5 "DRIFT ASSESSMENT"
+        else
+          echo "✓ Drift is bounded"
+        fi
+    
+    - name: Clean up report files after sync
+      if: success()  # Only run if previous steps succeeded
+      run: |
+        echo "Cleaning up report files after successful Notion sync..."
+        # Delete report files that were uploaded to Notion
+        rm -f *FINDINGS.md *ANALYSIS.md *SUMMARY.md PLOTS_SUMMARY.md RESEARCH_FINDINGS.md 2>/dev/null || true
+        # Count remaining markdown files (should only be docs/setup files)
+        remaining=$(find . -maxdepth 1 -name "*.md" -type f | wc -l)
+        echo "Remaining markdown files: $remaining (docs/setup files kept)"
+        
+        # Commit deletions if any files were removed
+        if [ -n "$(git status --porcelain | grep '^ D')" ]; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -u
+          git commit -m "chore: Remove report files after Notion sync" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+        fi
 

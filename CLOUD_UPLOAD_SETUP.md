@@ -240,3 +240,6 @@ https://storage.googleapis.com/your-bucket/notion-uploads/20251201_143022/plot1.
 
 **Once configured, all plots will automatically upload to cloud and embed in Notion pages!**
 
+
+
+

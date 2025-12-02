@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FEG Video Demo - Executable Video</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .demo-section {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .demo-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 */
+            background: #000;
+            border: 2px solid #00d4ff;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #feg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #00b8e6;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button.secondary {
+            background: #333;
+            color: #fff;
+        }
+        
+        button.secondary:hover {
+            background: #444;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            min-width: 200px;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #333;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .file-label:hover {
+            background: #444;
+        }
+        
+        .time-display {
+            color: #00d4ff;
+            font-weight: bold;
+            font-size: 14px;
+            min-width: 120px;
+            text-align: right;
+        }
+        
+        .topology-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: #0f1419;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        .code-block code {
+            color: #00ff88;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .status.success {
+            background: #0a4d2e;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+        }
+        
+        .status.info {
+            background: #0a2d4d;
+            color: #00d4ff;
+            border: 1px solid #00d4ff;
+        }
+        
+        .examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .example-card {
+            background: #0f1419;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .example-card:hover {
+            border-color: #00d4ff;
+            transform: translateY(-2px);
+        }
+        
+        .example-card h3 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+        }
+        
+        .example-card p {
+            color: #888;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 FEG Video Demo</h1>
+        <p class="subtitle">Executable Video: Frames computed from topology parameters</p>
+        
+        <div class="demo-section">
+            <h2>Player</h2>
+            <div id="status" class="status info">Ready. Load a .feg file or use an example below.</div>
+            
+            <div class="canvas-container">
+                <svg id="feg-canvas" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet">
+                    <defs>
+                        <style id="dynamic-styles"></style>
+                        <radialGradient id="bgGrad0" cx="50%" cy="50%">
+                            <stop offset="0%" style="stop-color:hsl(180, 70%, 20%);stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:hsl(240, 70%, 10%);stop-opacity:1" />
+                        </radialGradient>
+                    </defs>
+                    <rect class="background" x="0" y="0" width="1920" height="1080" fill="hsl(180, 70%, 15%)"/>
+                    <g id="field-lines"></g>
+                </svg>
+            </div>
+            
+            <div class="controls">
+                <button id="play-pause">▶ Play</button>
+                <button id="reset" class="secondary">⏮ Reset</button>
+                <input type="range" id="seek" min="0" max="100" value="0">
+                <div class="time-display">
+                    <span id="current-time">0.00s</span> / <span id="total-time">0.00s</span>
+                </div>
+                <label for="file-input" class="file-label">📁 Load .feg File</label>
+                <input type="file" id="file-input" accept=".feg">
+            </div>
+            
+            <div class="topology-info">
+                <div class="info-card">
+                    <div class="info-label">Genus (g)</div>
+                    <div class="info-value" id="genus">0</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Euler Characteristic (χ)</div>
+                    <div class="info-value" id="euler">2</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Hurst Field (H)</div>
+                    <div class="info-value" id="hurst">0.50</div>
+                </div>
+                <div class="info-card">
+                    <div class="info-label">Timestamp</div>
+                    <div class="info-value" id="timestamp">0.00s</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Example Videos</h2>
+            <p style="color: #888; margin-bottom: 15px;">Click to load example FEG videos:</p>
+            <div class="examples">
+                <div class="example-card" onclick="loadExample('heartbeat')">
+                    <h3>💓 Heartbeat</h3>
+                    <p>Topology evolution: sphere → torus → higher genus</p>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">10s • 5 keyframes • 2 transitions</p>
+                </div>
+                <div class="example-card" onclick="loadExample('simple')">
+                    <h3>🌀 Simple Wave</h3>
+                    <p>Basic topology state with field lines</p>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">5s • 1 keyframe</p>
+                </div>
+                <div class="example-card" onclick="loadExample('transition')">
+                    <h3>⚡ Shock Transition</h3>
+                    <p>Genus jump with shock energy visualization</p>
+                    <p style="font-size: 12px; color: #666; margin-top: 5px;">3s • 1 transition</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>How It Works</h2>
+            <p style="color: #888; margin-bottom: 15px;">
+                FEG Video stores topology parameters (genus, Euler characteristic, Hurst field) 
+                instead of pixels. Frames are computed in real-time using CSS/SVG.
+            </p>
+            <div class="code-block">
+                <code>
+&lt;feg-video duration="10s" fps="30"&gt;
+  &lt;topology-state g="0" χ="2" H="0.5" timestamp="0s"/&gt;
+  &lt;keyframe t="0s"&gt;
+    &lt;style&gt;
+      .background { fill: radial-gradient(...); }
+      .field-line { stroke: hsl(180, 70%, 60%); }
+    &lt;/style&gt;
+  &lt;/keyframe&gt;
+&lt;/feg-video&gt;
+                </code>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class FEGPlayer {
+            constructor() {
+                this.video = null;
+                this.currentTime = 0;
+                this.isPlaying = false;
+                this.animationFrame = null;
+                this.startTime = null;
+                
+                this.setupControls();
+            }
+            
+            loadVideo(videoData) {
+                try {
+                    // Reset player state
+                    this.pause();
+                    this.currentTime = 0;
+                    this.startTime = null;
+                    
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(videoData, 'text/xml');
+                    
+                    // Check for parsing errors
+                    const parserError = doc.querySelector('parsererror');
+                    if (parserError) {
+                        throw new Error('Invalid XML: ' + parserError.textContent);
+                    }
+                    
+                    this.video = this.parseFEGVideo(doc);
+                    
+                    document.getElementById('total-time').textContent = 
+                        this.video.duration.toFixed(2) + 's';
+                    document.getElementById('seek').max = this.video.duration * 100;
+                    document.getElementById('seek').value = 0;
+                    
+                    // Always start at 0
+                    this.currentTime = 0;
+                    this.renderFrame(0);
+                    this.updateStatus('Video loaded successfully!', 'success');
+                } catch (error) {
+                    this.updateStatus('Error loading video: ' + error.message, 'error');
+                    console.error(error);
+                }
+            }
+            
+            parseFEGVideo(doc) {
+                const root = doc.documentElement;
+                const duration = parseFloat(root.getAttribute('duration') || '0');
+                const fps = parseInt(root.getAttribute('fps') || '30');
+                const resolution = root.getAttribute('resolution') || '1920x1080';
+                
+                const video = {
+                    duration,
+                    fps,
+                    resolution,
+                    topologyStates: [],
+                    keyframes: [],
+                    transitions: []
+                };
+                
+                // Parse topology states
+                const states = root.querySelectorAll('topology-state');
+                states.forEach(state => {
+                    video.topologyStates.push({
+                        g: parseInt(state.getAttribute('g') || '0'),
+                        chi: parseInt(state.getAttribute('χ') || '2'),
+                        H: parseFloat(state.getAttribute('H') || '0.5'),
+                        timestamp: parseFloat((state.getAttribute('timestamp') || '0').replace('s', ''))
+                    });
+                });
+                
+                // Parse keyframes
+                const keyframes = root.querySelectorAll('keyframe');
+                keyframes.forEach(kf => {
+                    const t = parseFloat((kf.getAttribute('t') || '0').replace('s', ''));
+                    const manifold = kf.querySelector('manifold-declaration');
+                    const style = manifold?.querySelector('style');
+                    const css = style?.textContent || '';
+                    
+                    video.keyframes.push({ t, css });
+                });
+                
+                // Parse transitions
+                const transitions = root.querySelectorAll('topology-transition');
+                transitions.forEach(trans => {
+                    const t = parseFloat((trans.getAttribute('t') || '0').replace('s', ''));
+                    const g = trans.getAttribute('g') || '0→0';
+                    const [gFrom, gTo] = g.split('→').map(x => parseInt(x));
+                    const chi = trans.getAttribute('χ') || '2→2';
+                    const [chiFrom, chiTo] = chi.split('→').map(x => parseInt(x));
+                    const shockEnergy = parseFloat(trans.getAttribute('shock-energy') || '0');
+                    const styleDelta = trans.querySelector('style-delta')?.textContent || '';
+                    const duration = trans.getAttribute('duration') ? 
+                        parseFloat(trans.getAttribute('duration').replace('s', '')) : 0.5;
+                    
+                    video.transitions.push({
+                        t, gFrom, gTo, chiFrom, chiTo, shockEnergy, styleDelta, duration
+                    });
+                });
+                
+                return video;
+            }
+            
+            renderFrame(t) {
+                if (!this.video) return;
+                
+                // Find current topology state (interpolate between states)
+                const states = this.video.topologyStates.filter(s => s.timestamp <= t);
+                let state = states.length > 0 ? states[states.length - 1] : null;
+                
+                // Interpolate to next state if between states
+                if (states.length > 0) {
+                    const nextState = this.video.topologyStates.find(s => s.timestamp > t);
+                    if (nextState && state) {
+                        const progress = (t - state.timestamp) / (nextState.timestamp - state.timestamp);
+                        state = {
+                            g: state.g,
+                            chi: state.chi,
+                            H: state.H + (nextState.H - state.H) * progress,
+                            timestamp: t
+                        };
+                    }
+                }
+                
+                if (!state && this.video.topologyStates.length > 0) {
+                    state = this.video.topologyStates[0];
+                }
+                
+                // Find active transition
+                const transition = this.video.transitions.find(trans => {
+                    const transEnd = trans.t + trans.duration;
+                    return t >= trans.t && t <= transEnd;
+                });
+                
+                // Calculate transition progress
+                let transitionProgress = 0;
+                if (transition) {
+                    transitionProgress = (t - transition.t) / transition.duration;
+                    transitionProgress = Math.max(0, Math.min(1, transitionProgress));
+                }
+                
+                // Find nearest keyframe
+                const keyframe = this.video.keyframes.reduce((prev, curr) => 
+                    Math.abs(curr.t - t) < Math.abs(prev.t - t) ? curr : prev,
+                    this.video.keyframes[0] || { t: 0, css: '' }
+                );
+                
+                // Render visualization
+                const canvas = document.getElementById('feg-canvas');
+                const fieldLinesGroup = document.getElementById('field-lines');
+                const background = canvas.querySelector('.background');
+                
+                // Clear existing field lines
+                fieldLinesGroup.innerHTML = '';
+                
+                // Render based on topology state
+                if (state) {
+                    const g = state.g;
+                    const chi = state.chi;
+                    const H = state.H;
+                    
+                    // Background with gradient based on topology
+                    const hue = (g * 60 + H * 60) % 360;
+                    const sat = 70;
+                    const light = 15 + H * 5;
+                    background.setAttribute('fill', `hsl(${Math.round(hue)}, ${sat}%, ${Math.round(light)}%)`);
+                    
+                    // Render topology structure based on genus
+                    if (g === 0) {
+                        // Sphere (g=0): Draw filled circle with wave pattern
+                        const baseRadius = 300;
+                        const pulse = Math.sin(t * 2) * 50;
+                        const radius = baseRadius + pulse;
+                        
+                        // Outer circle
+                        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        circle.setAttribute('cx', '960');
+                        circle.setAttribute('cy', '540');
+                        circle.setAttribute('r', radius.toString());
+                        circle.setAttribute('fill', `hsl(${Math.round(hue)}, ${sat}%, ${Math.round(light + 10)}%)`);
+                        circle.setAttribute('opacity', '0.6');
+                        fieldLinesGroup.appendChild(circle);
+                        
+                        // Wave pattern inside
+                        const numWaves = Math.max(2, Math.abs(chi));
+                        for (let i = 0; i < numWaves; i++) {
+                            const wavePhase = (i / numWaves) * 2 * Math.PI + t * 2;
+                            const waveRadius = radius * 0.7;
+                            const waveX = 960 + Math.cos(wavePhase) * waveRadius;
+                            const waveY = 540 + Math.sin(wavePhase) * waveRadius;
+                            const waveSize = 30 + H * 40;
+                            
+                            const waveCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            waveCircle.setAttribute('cx', waveX.toString());
+                            waveCircle.setAttribute('cy', waveY.toString());
+                            waveCircle.setAttribute('r', waveSize.toString());
+                            waveCircle.setAttribute('fill', `hsl(${Math.round((hue + i * 30) % 360)}, ${sat}%, 50%)`);
+                            waveCircle.setAttribute('opacity', (0.4 + H * 0.3).toFixed(2));
+                            fieldLinesGroup.appendChild(waveCircle);
+                        }
+                        
+                    } else if (g === 1) {
+                        // Torus (g=1): Draw donut shape with rotating pattern
+                        const outerRadius = 350;
+                        const innerRadius = 150;
+                        
+                        // Outer ring
+                        const outerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        outerCircle.setAttribute('cx', '960');
+                        outerCircle.setAttribute('cy', '540');
+                        outerCircle.setAttribute('r', outerRadius.toString());
+                        outerCircle.setAttribute('fill', `hsl(${Math.round(hue)}, ${sat}%, ${Math.round(light + 8)}%)`);
+                        outerCircle.setAttribute('opacity', '0.5');
+                        fieldLinesGroup.appendChild(outerCircle);
+                        
+                        // Inner hole (donut)
+                        const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                        innerCircle.setAttribute('cx', '960');
+                        innerCircle.setAttribute('cy', '540');
+                        innerCircle.setAttribute('r', innerRadius.toString());
+                        innerCircle.setAttribute('fill', `hsl(${Math.round(hue)}, ${sat}%, ${Math.round(light - 5)}%)`);
+                        fieldLinesGroup.appendChild(innerCircle);
+                        
+                        // Rotating pattern elements
+                        const numElements = 8;
+                        for (let i = 0; i < numElements; i++) {
+                            const elementPhase = (i / numElements) * 2 * Math.PI + t * 1.5;
+                            const elementRadius = (outerRadius + innerRadius) / 2;
+                            const elementX = 960 + Math.cos(elementPhase) * elementRadius;
+                            const elementY = 540 + Math.sin(elementPhase) * elementRadius;
+                            const elementSize = 20 + H * 15;
+                            
+                            const element = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                            element.setAttribute('cx', elementX.toString());
+                            element.setAttribute('cy', elementY.toString());
+                            element.setAttribute('r', elementSize.toString());
+                            element.setAttribute('fill', `hsl(${Math.round((hue + i * 45) % 360)}, ${sat}%, 55%)`);
+                            element.setAttribute('opacity', (0.6 + H * 0.3).toFixed(2));
+                            fieldLinesGroup.appendChild(element);
+                        }
+                        
+                    } else {
+                        // Higher genus (g>1): Complex interconnected structure
+                        const centerX = 960;
+                        const centerY = 540;
+                        const baseRadius = 200;
+                        
+                        // Draw multiple interconnected loops
+                        const numLoops = g + 1;
+                        for (let i = 0; i < numLoops; i++) {
+                            const loopPhase = (i / numLoops) * 2 * Math.PI + t * 0.8;
+                            const loopRadius = baseRadius + i * 40;
+                            const loopX = centerX + Math.cos(loopPhase) * 100;
+                            const loopY = centerY + Math.sin(loopPhase) * 100;
+                            
+                            // Draw loop as filled path
+                            const loopPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                            const loopAngle = t * 0.5 + i;
+                            const x1 = loopX + Math.cos(loopAngle) * loopRadius;
+                            const y1 = loopY + Math.sin(loopAngle) * loopRadius;
+                            const x2 = loopX + Math.cos(loopAngle + Math.PI) * loopRadius;
+                            const y2 = loopY + Math.sin(loopAngle + Math.PI) * loopRadius;
+                            const controlX = loopX + Math.cos(loopAngle + Math.PI/2) * loopRadius * 0.5;
+                            const controlY = loopY + Math.sin(loopAngle + Math.PI/2) * loopRadius * 0.5;
+                            
+                            loopPath.setAttribute('d', `M ${x1},${y1} Q ${controlX},${controlY} ${x2},${y2} Q ${loopX},${loopY} ${x1},${y1} Z`);
+                            loopPath.setAttribute('fill', `hsl(${Math.round((hue + i * 40) % 360)}, ${sat}%, ${Math.round(light + 5 + i * 2)}%)`);
+                            loopPath.setAttribute('opacity', (0.4 + H * 0.3).toFixed(2));
+                            fieldLinesGroup.appendChild(loopPath);
+                        }
+                    }
+                    
+                    // Add transition effects
+                    if (transition && transitionProgress > 0) {
+                        const elements = fieldLinesGroup.querySelectorAll('circle, path');
+                        elements.forEach((el, idx) => {
+                            if (transition.gFrom === 0 && transition.gTo === 1) {
+                                // Sphere to torus: fade and scale
+                                const scale = 0.8 + transitionProgress * 0.4;
+                                const opacity = parseFloat(el.getAttribute('opacity') || '1') * (1 - transitionProgress * 0.3);
+                                el.setAttribute('transform', `scale(${scale})`);
+                                el.setAttribute('opacity', opacity.toFixed(2));
+                            }
+                        });
+                    }
+                }
+                
+                // Update topology info
+                if (state) {
+                    document.getElementById('genus').textContent = state.g;
+                    document.getElementById('euler').textContent = state.chi;
+                    document.getElementById('hurst').textContent = state.H.toFixed(2);
+                }
+                
+                document.getElementById('timestamp').textContent = t.toFixed(2) + 's';
+                document.getElementById('current-time').textContent = t.toFixed(2) + 's';
+            }
+            
+            
+            setupControls() {
+                document.getElementById('play-pause').addEventListener('click', () => {
+                    if (this.isPlaying) {
+                        this.pause();
+                    } else {
+                        this.play();
+                    }
+                });
+                
+                document.getElementById('reset').addEventListener('click', () => {
+                    this.reset();
+                });
+                
+                document.getElementById('seek').addEventListener('input', (e) => {
+                    const t = parseFloat(e.target.value) / 100;
+                    this.seek(t);
+                });
+                
+                document.getElementById('file-input').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            this.loadVideo(event.target.result);
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+            }
+            
+            play() {
+                if (!this.video) return;
+                
+                this.isPlaying = true;
+                this.startTime = performance.now() / 1000 - this.currentTime;
+                document.getElementById('play-pause').textContent = '⏸ Pause';
+                
+                const animate = () => {
+                    if (!this.isPlaying) return;
+                    
+                    this.currentTime = performance.now() / 1000 - this.startTime;
+                    if (this.currentTime >= this.video.duration) {
+                        this.pause();
+                        this.currentTime = this.video.duration;
+                    }
+                    
+                    this.renderFrame(this.currentTime);
+                    document.getElementById('seek').value = this.currentTime * 100;
+                    
+                    this.animationFrame = requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+            
+            pause() {
+                this.isPlaying = false;
+                document.getElementById('play-pause').textContent = '▶ Play';
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+            
+            seek(t) {
+                if (!this.video) return;
+                this.currentTime = Math.max(0, Math.min(t, this.video.duration));
+                document.getElementById('seek').value = this.currentTime * 100;
+                this.renderFrame(this.currentTime);
+                if (this.isPlaying) {
+                    this.startTime = performance.now() / 1000 - this.currentTime;
+                }
+            }
+            
+            reset() {
+                this.pause();
+                this.currentTime = 0;
+                this.startTime = null;
+                if (this.video) {
+                    document.getElementById('seek').value = 0;
+                    this.renderFrame(0);
+                }
+            }
+            
+            updateStatus(message, type = 'info') {
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = message;
+                statusEl.className = 'status ' + type;
+            }
+        }
+        
+        // Initialize player
+        const player = new FEGPlayer();
+        
+        // Ensure player starts at 0 when page loads
+        window.addEventListener('load', () => {
+            player.reset();
+        });
+        
+        // Example FEG videos
+        const examples = {
+            heartbeat: `<?xml version="1.0"?>
+<feg-video duration="10.0s" fps="30" resolution="1920x1080">
+  <topology-state g="0" χ="2" H="0.5" timestamp="0.0s"/>
+  <topology-state g="0" χ="2" H="0.6" timestamp="2.0s"/>
+  <topology-state g="1" χ="0" H="0.7" timestamp="5.0s"/>
+  <topology-state g="1" χ="0" H="0.8" timestamp="7.0s"/>
+  <topology-state g="2" χ="-2" H="0.9" timestamp="10.0s"/>
+</feg-video>`,
+            
+            simple: `<?xml version="1.0"?>
+<feg-video duration="5.0s" fps="30" resolution="1920x1080">
+  <topology-state g="0" χ="2" H="0.3" timestamp="0.0s"/>
+  <topology-state g="0" χ="2" H="0.5" timestamp="2.5s"/>
+  <topology-state g="0" χ="2" H="0.7" timestamp="5.0s"/>
+  <topology-state g="0" χ="2" H="0.9" timestamp="5.0s"/>
+</feg-video>`,
+            
+            transition: `<?xml version="1.0"?>
+<feg-video duration="3.0s" fps="30" resolution="1920x1080">
+  <topology-state g="0" χ="2" H="0.5" timestamp="0.0s"/>
+  <topology-state g="1" χ="0" H="0.7" timestamp="3.0s"/>
+</feg-video>`
+        };
+        
+        function loadExample(name) {
+            if (examples[name]) {
+                player.loadVideo(examples[name]);
+                // Ensure we're at 0 after loading
+                player.reset();
+            }
+        }
+        
+        // Auto-load heartbeat example after page is ready
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                loadExample('heartbeat');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+

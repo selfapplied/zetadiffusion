@@ -1,186 +1,106 @@
-# Historical Roadmap
+# Next Steps
 
-> **Note:** For current status and next actions, see **VALIDATION_STATUS.md** and **PROJECT_STATUS.md**  
-> This document contains historical context and theoretical directions.
-
-## Historical Context
-
-### Empirical Validation Results
-- **Temperature Range:** T ∈ [0.1, 4.0] ✓
-- **Bifurcations Detected:** 0 (system remains period-1)
-- **Entropy Saturation:** ✓ Fits well (R² = 0.954)
-  - H∞ = 11.607 ± 0.407
-  - τ = 1.444 ± 0.126
-- **Feigenbaum δ:** Not observed (no bifurcations)
-
-### Diagnosis
-GPT-2 at temperature sampling does not exhibit period-doubling bifurcations. The system shows continuous entropy growth rather than discrete phase transitions.
+**Last Updated:** December 1, 2025
 
 ---
 
-## Path 1: Empirical Validation (Enhanced)
+## Current System Status
 
-### Option A: Adjust System Parameters
-**Problem:** GPT-2 temperature sampling may not be the right system for Feigenbaum analysis.
+✅ **Completed:**
+- Harmonic Machine (4-layer architecture)
+- CE1 Stability Module (precision gate + activator + aligner)
+- Witness Operator <Q> (field-theoretic stability detector)
+- Guardian-Witness Coupling (3 regimes: shield/resonate/harvest)
+- Drift Monitoring (automated)
+- Notion Integration (automated sync)
 
-**Solutions:**
-1. **Use FEG-0.4 Operator Directly**
-   - Run temperature cascade on the actual renormalization operator
-   - Use `zetadiffusion.renorm.RGOperator` with varying chaos injection
-   - Measure bifurcations in operator iterations, not model sampling
-
-2. **Increase Nonlinearity**
-   - Inject stronger chaos (λ → 0.5+)
-   - Reduce Guardian coupling (β → 0.1)
-   - Force system into underdamped regime
-
-3. **Alternative Order Parameter**
-   - Instead of period, measure rotation number from circle maps
-   - Track when rotation number becomes rational (period-doubling)
-   - Use `zetadiffusion.dynamics.CircleMapExtractor`
-
-### Option B: Different System
-**Try:** Logistic map or other known Feigenbaum systems
-- Logistic map: x_{n+1} = r·x_n(1 - x_n)
-- Vary r parameter, measure bifurcation intervals
-- Verify δ convergence on known system first
-
-### Recommended Action
-```python
-# Use FEG-0.4 operator for temperature cascade
-from zetadiffusion.renorm import RGOperator
-from zetadiffusion.guardian import SystemState
-
-# Vary chaos injection instead of temperature
-for chaos in np.linspace(0.1, 0.8, 40):
-    state = SystemState(chaos=chaos, coherence=0.5, stress=0.1, hurst=0.5)
-    # Measure period-doubling in operator iterations
-```
+📊 **Validation:** 12 results files in `.out/`
 
 ---
 
-## Path 2: Proof of Conjecture 9.1.1
+## Recommended Next Steps
 
-### Current Status
-- Proof sketch implemented
-- Binomial edge effects computed
-- Bernoulli expansion for tan derived
-- Needs verification against actual zeros
+### 1. **Integrate Witness Operator into Harmonic Machine** ⭐ (Recommended)
 
-### Next Steps
-1. **Run Verification**
-   ```bash
-   python validate_conjecture_9_1_1.py
-   ```
+**Why:** Connect field-theoretic stability detection to the harmonic dynamics loop.
 
-2. **Refine Correction Term**
-   - If error > 5%, adjust arctangent coefficient
-   - Add higher-order terms from Bernoulli expansion
-   - Include next-order correction: O(tan⁻¹(n²))
+**What:**
+- Use witness measurements to inform stability module activation
+- Replace simple `n ≥ 11` threshold with witness-based activation
+- Use `⟨Q⟩` to modulate alignment operator strength
+- Track witness ledger during harmonic evolution
 
-3. **Asymptotic Analysis**
-   - Compute asymptotic behavior of Bernoulli numbers
-   - Derive exact form: t_n = πn/log(2π) + c·tan⁻¹(n) + O(1/n)
-   - Determine constant c from binomial edge effects
-
-### Recommended Action
-Run the proof sketch and analyze error patterns to refine the correction term.
+**Benefit:** Real-time stability detection based on actual system behavior, not just iteration count.
 
 ---
 
-## Path 3: Computational Demonstration
+### 2. **Visualize Witness Trajectory**
 
-### Current Status
-- All four visualizations implemented
-- Pascal triangle, tan rotation, attention mapping, Nash solver
+**What:**
+- Plot λ(n) trajectory showing peak at n=9
+- Plot ⟨Q⟩(n) showing transition from coherent → decoherent → marginal
+- Overlay with error data to show correlation
+- Show weight evolution W_F → W_B → W_I
 
-### Next Steps
-1. **Run Visualizations**
-   ```bash
-   python demo_interactive_visualization.py
-   ```
-
-2. **Make Interactive**
-   - Add real-time parameter adjustment
-   - Create web interface or Jupyter notebook
-   - Allow user to vary coherence/chaos and see Nash equilibrium update
-
-3. **Integrate with FEG-0.4**
-   - Connect visualizations to actual operator state
-   - Show real-time operator evolution
-   - Map attention weights from actual transformer models
-
-### Recommended Action
-Run the demo and create an interactive version that connects to the FEG-0.4 system.
+**Benefit:** Visual confirmation of theoretical predictions.
 
 ---
 
-## Immediate Next Steps (Priority Order)
+### 3. **Map Witness Ledger to OPIC Opcodes**
 
-### 1. Fix Empirical Validation (High Priority)
-**Why:** This validates the entire theoretical framework.
+**What:**
+- Define OPIC opcodes for witness operations
+- Map ledger entries to executable instructions
+- Create CE1 bracket grammar for witness operations
 
-**Action:**
-- Modify `validate_temperature_cascade.py` to use FEG-0.4 operator instead of GPT-2
-- Vary chaos injection (not temperature) to induce bifurcations
-- Measure period-doubling in operator iterations
-
-**File to create:** `validate_feg_cascade.py`
-
-### 2. Run Conjecture Proof (Medium Priority)
-**Why:** Provides theoretical validation of zero formula.
-
-**Action:**
-```bash
-python validate_conjecture_9_1_1.py
-```
-- Analyze error patterns
-- Refine correction term if needed
-
-### 3. Create Interactive Demo (Low Priority)
-**Why:** Demonstrates concepts visually.
-
-**Action:**
-```bash
-python demo_interactive_visualization.py
-```
-- Review visualizations
-- Consider making interactive
+**Benefit:** Enables execution of witness operations in OPIC system.
 
 ---
 
-## Key Insight
+### 4. **Run Comprehensive Validation Suite**
 
-**The temperature cascade on GPT-2 is the wrong system.** 
+**What:**
+- Run all validation scripts
+- Generate diagnostic plots
+- Upload everything to Notion
+- Create summary report
 
-Feigenbaum's δ emerges from **renormalization group flow**, not model sampling temperature. We need to:
-
-1. Use the actual **RGOperator** from `zetadiffusion.renorm`
-2. Vary **chaos injection** (λ) instead of temperature
-3. Measure **period-doubling in operator iterations**, not token sequences
-
-The FEG-0.4 system is designed for this—it has the renormalization operator, chaos driver, and period-doubling mechanism built in.
+**Benefit:** Complete audit trail and status check.
 
 ---
 
-## Recommended Next Command
+### 5. **Create Unified System Documentation**
+
+**What:**
+- Document how Harmonic Machine + Witness Operator work together
+- Create architecture diagram
+- Write integration guide
+- Document API usage
+
+**Benefit:** Clear understanding of complete system.
+
+---
+
+## Recommendation
+
+**Start with #1 (Witness-Harmonic Integration)** because:
+- It's the most natural next step (connects two major systems)
+- Provides immediate value (real-time stability detection)
+- Grounded and structural (no new concepts, just wiring)
+- Sets foundation for visualization (#2) and OPIC mapping (#3)
+
+---
+
+## Quick Start
+
+If you want to proceed with integration:
 
 ```bash
-# Create FEG-0.4 temperature cascade
-python -c "
-from zetadiffusion.renorm import RGOperator, local_scan
-from zetadiffusion.guardian import SystemState
-import numpy as np
-
-# Vary chaos to induce bifurcations
-for chaos in np.linspace(0.1, 0.8, 40):
-    state = SystemState(chaos=chaos, coherence=0.5, stress=0.1, hurst=0.5)
-    # Measure period-doubling here
-"
+# I can:
+1. Modify harmonic_machine.py to use witness operator
+2. Update validate_harmonic_machine.py to show witness measurements
+3. Test the integrated system
+4. Document the integration
 ```
 
-This will test the actual theoretical framework rather than GPT-2's sampling behavior.
-
-
-
-
+Say "integrate witness" or "let's do #1" to proceed.

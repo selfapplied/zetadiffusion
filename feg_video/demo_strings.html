@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FEG-SVG 0.1: Harmonic Strings Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 40px);
+        }
+        
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+        
+        .sidebar {
+            width: 400px;
+            flex-shrink: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        h1 {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+        }
+        
+        .demo-section {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .main-panel .demo-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .sidebar .demo-section {
+            margin-bottom: 0;
+        }
+        
+        .demo-section h2 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 */
+            background: #000;
+            border: 2px solid #00d4ff;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #feg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            background: #00d4ff;
+            color: #000;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #00b8e6;
+            transform: translateY(-2px);
+        }
+        
+        .code-block {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+        
+        .code-block code {
+            color: #00ff88;
+        }
+        
+        .string-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: #0f1419;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+        
+        .string-editor {
+            background: #0f1419;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .string-editor h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .param-control {
+            display: grid;
+            grid-template-columns: 80px 1fr 80px;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .param-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #00d4ff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .param-value {
+            font-size: 14px;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            text-align: right;
+        }
+        
+        .live-spec {
+            background: #0a0a0a;
+            border: 1px solid #00d4ff;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #00ff88;
+        }
+        
+        .spec-header {
+            color: #00d4ff;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-panel">
+            <h1>🎵 FEG-SVG 0.1: Harmonic Strings</h1>
+            <p class="subtitle">Field Equation Graphics — Physics Masquerading as SVG</p>
+            
+            <div class="demo-section">
+                <h2>String-Driven Visualization</h2>
+                
+                <div class="canvas-container" style="flex: 1; min-height: 0;">
+                    <svg id="feg-canvas" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%;">
+                        <defs>
+                            <!-- Gradient driven by string(2,t) -->
+                            <linearGradient id="fieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" id="gradStop1" stop-color="hsl(180, 70%, 50%)" stop-opacity="1"/>
+                                <stop offset="100%" id="gradStop2" stop-color="hsl(240, 70%, 30%)" stop-opacity="1"/>
+                            </linearGradient>
+                            
+                            <!-- Clip path responding to string(3,t) -->
+                            <clipPath id="pulseClip">
+                                <circle id="clipCircle" cx="960" cy="540" r="200"/>
+                            </clipPath>
+                            
+                            <!-- Filter with string-driven turbulence -->
+                            <filter id="fieldFilter">
+                                <feTurbulence id="turbulence" baseFrequency="0.01" numOctaves="2" seed="0"/>
+                            </filter>
+                        </defs>
+                        
+                        <!-- Background with gradient -->
+                        <rect x="0" y="0" width="1920" height="1080" fill="url(#fieldGrad)"/>
+                        
+                        <!-- Path defined by string(0,t) and string(1,t) -->
+                        <path id="stringPath" 
+                              d="M 0,540 L 1920,540" 
+                              stroke="#00d4ff" 
+                              stroke-width="4" 
+                              fill="none"
+                              clip-path="url(#pulseClip)"/>
+                        
+                        <!-- Circles at string positions -->
+                        <circle id="stringCircle1" cx="480" cy="540" r="30" fill="#00ff88" opacity="0.8"/>
+                        <circle id="stringCircle2" cx="1440" cy="540" r="30" fill="#ff0088" opacity="0.8"/>
+                        
+                        <!-- Waveform visualization -->
+                        <g id="waveform" stroke="#00d4ff" stroke-width="2" fill="none" opacity="0.6"/>
+                    </svg>
+                </div>
+                
+                <div class="controls">
+                    <button id="play-pause">▶ Play</button>
+                    <button id="reset">⏮ Reset</button>
+                </div>
+                
+                <div class="string-info" id="string-info">
+                    <div class="info-card">
+                        <div class="info-label">Time</div>
+                        <div class="info-value" id="time">0.00s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="demo-section">
+                <h2>String Definitions</h2>
+                <p style="color: #888; margin-bottom: 15px; font-size: 12px;">
+                    <strong>String := (symbol, deps, expr)</strong><br>
+                    Each definition creates a new composed type.
+                </p>
+                <div id="string-editors" style="max-height: 60vh; overflow-y: auto;"></div>
+            </div>
+            
+            <div class="demo-section">
+                <h2>Live Spec</h2>
+                <div class="live-spec" style="max-height: 300px;">
+                    <div class="spec-header">FEG-SVG XML</div>
+                    <pre id="live-spec-content" style="font-size: 10px;"></pre>
+                </div>
+            </div>
+            
+            <div class="demo-section">
+                <h2>Code</h2>
+                <div class="code-block" style="max-height: 200px; overflow-y: auto;">
+                    <code id="code-example" style="font-size: 11px;">
+// String definitions
+                    </code>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class StringEngine {
+            constructor() {
+                // Type system: phase values map to fundamental types
+                this.types = {
+                    'color': { phase: 0, transform: (val) => {
+                        const hue = (180 + val * 60) % 360;
+                        return `hsl(${Math.round(hue)}, 70%, 50%)`;
+                    }},
+                    'clip': { phase: Math.PI/2, transform: (val) => 200 + 30 * val },
+                    'position': { phase: Math.PI, transform: (val) => 540 + 200 * val },
+                    'shape': { phase: 3*Math.PI/2, transform: (val) => 0.5 + 0.25 * val }
+                };
+                
+                // String registry: {symbol, deps: [string], expr: string, type}
+                // The irreducible algebra: String := (symbol, deps, expr)
+                // Each expression produces a new string-type
+                this.strings = [
+                    { symbol: 'Hue', deps: ['x'], expr: 'sin(x)', type: 'color' },
+                    { symbol: 'Hue', deps: ['x', 'y'], expr: 'sin(x) + 0.5*sin(y*2)', type: 'color' },
+                    { symbol: 'Radius', deps: ['t'], expr: 'sin(t*0.8)', type: 'shape' },
+                    { symbol: 'Radius', deps: ['t', 'a'], expr: 'sin(t*1.2) + 0.8*sin(a*0.9)', type: 'shape' },
+                    { symbol: 'X', deps: ['t'], expr: 'sin(t*0.5)*0.6', type: 'position' },
+                    { symbol: 'Clip', deps: ['t'], expr: 'sin(t*0.5)*1.2', type: 'clip' }
+                ];
+                
+                // Name registry: symbol → deps → string
+                this.nameRegistry = {};
+                this.strings.forEach(s => {
+                    if (!this.nameRegistry[s.symbol]) {
+                        this.nameRegistry[s.symbol] = {};
+                    }
+                    this.nameRegistry[s.symbol][s.deps.join(',')] = s;
+                });
+                
+                this.t = 0;
+                this.isPlaying = false;
+                this.animationFrame = null;
+                this.startTime = null;
+                
+                this.setupEditors();
+                this.updateSpec();
+            }
+            
+            // Get phase from type
+            getPhaseForType(type) {
+                return this.types[type]?.phase || 0;
+            }
+            
+            // Get all strings of a given type
+            getStringsByType(type) {
+                return this.strings.filter(s => s.type === type);
+            }
+            
+            // Get all strings with a given symbol (harmonic family)
+            getStringsBySymbol(symbol) {
+                return this.strings.filter(s => s.symbol === symbol);
+            }
+            
+            // Resolve string by symbol and dependency pattern (pattern matching)
+            resolveString(symbol, requestedDeps) {
+                const family = this.getStringsBySymbol(symbol);
+                if (family.length === 0) return null;
+                
+                const requestedArity = requestedDeps ? requestedDeps.length : 1;
+                
+                // 1. Exact dependency match
+                const exact = family.find(s => 
+                    s.deps.length === requestedArity && 
+                    (!requestedDeps || s.deps.every((d, i) => d === requestedDeps[i]))
+                );
+                if (exact) return exact;
+                
+                // 2. Nearest arity match
+                const arities = family.map(s => s.deps.length).sort((a, b) => a - b);
+                let nearest = arities[0];
+                let minDist = Math.abs(arities[0] - requestedArity);
+                arities.forEach(arity => {
+                    const dist = Math.abs(arity - requestedArity);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        nearest = arity;
+                    }
+                });
+                
+                return family.find(s => s.deps.length === nearest);
+            }
+            
+            // Evaluate string expression with wave-bound guarantee
+            // Enforces: boundedness, no recursion, fixed-point collapse
+            evaluateString(symbol, deps, t, context = {}, visited = new Set()) {
+                const s = this.resolveString(symbol, deps);
+                if (!s) return 0;
+                
+                // Wave-bound: prevent infinite recursion
+                const key = `${symbol}(${deps ? deps.join(',') : ''})`;
+                if (visited.has(key)) {
+                    // Harmonic fixed-point collapse: return stable value
+                    return 0; // or cached fixed-point value
+                }
+                visited.add(key);
+                
+                // Build evaluation context from dependencies
+                const evalContext = {};
+                s.deps.forEach((dep, i) => {
+                    // Check if dep references another string
+                    const depString = this.strings.find(str => str.symbol === dep);
+                    if (depString && !visited.has(`${dep}(${depString.deps.join(',')})`)) {
+                        // Functional substitution (not recursive call)
+                        evalContext[dep] = this.evaluateString(dep, depString.deps, t, context, new Set(visited));
+                    } else {
+                        // Time-based or primitive value
+                        evalContext[dep] = t + (i / s.deps.length) * Math.PI * 2;
+                    }
+                });
+                
+                // Merge with provided context
+                Object.assign(evalContext, context);
+                
+                // Wave-bound: ensure time dependency is explicit
+                if (s.deps.includes('t')) {
+                    evalContext['t'] = t;
+                }
+                
+                // Evaluate expression with bounded functions only
+                try {
+                    // Replace dependency symbols with their values
+                    let expr = s.expr;
+                    s.deps.forEach(dep => {
+                        const value = evalContext[dep];
+                        // Ensure value is finite (wave-bound constraint)
+                        const boundedValue = isFinite(value) ? value : 0;
+                        expr = expr.replace(new RegExp(`\\b${dep}\\b`, 'g'), boundedValue);
+                    });
+                    
+                    // Evaluate with bounded functions only
+                    // In production, use a safe expression evaluator that only allows:
+                    // sin, cos, tanh, +, -, *, /, Math.abs, Math.min, Math.max
+                    const result = eval(expr);
+                    
+                    // Wave-bound: ensure result is finite and bounded
+                    if (!isFinite(result) || Math.abs(result) > 1000) {
+                        console.warn(`Wave-bound violation: ${symbol}(${deps ? deps.join(',') : ''}) = ${result}`);
+                        return 0;
+                    }
+                    
+                    return result;
+                } catch (e) {
+                    console.error('Expression evaluation error:', e);
+                    return 0;
+                } finally {
+                    visited.delete(key);
+                }
+            }
+            
+            setupEditors() {
+                const container = document.getElementById('string-editors');
+                container.innerHTML = '';
+                
+                this.strings.forEach((s, i) => {
+                    const editor = document.createElement('div');
+                    editor.className = 'string-editor';
+                    
+                    const sameSymbolCount = this.getStringsBySymbol(s.symbol).length;
+                    const symbolLabel = sameSymbolCount > 1 ? 
+                        `${s.symbol} (${sameSymbolCount} types)` : s.symbol;
+                    
+                    const typeOptions = Object.keys(this.types).map(t => 
+                        `<option value="${t}" ${s.type === t ? 'selected' : ''}>${t}</option>`
+                    ).join('');
+                    
+                    const depsStr = s.deps.join(', ');
+                    const arity = s.deps.length;
+                    
+                    editor.innerHTML = `
+                        <h3>Type: ${symbolLabel}(${depsStr})</h3>
+                        <p style="color: #888; font-size: 12px; margin-bottom: 10px;">
+                            String := (symbol, deps, expr)<br>
+                            <code>${s.symbol}(${depsStr}) := ${s.expr}</code>
+                        </p>
+                        <div class="param-control">
+                            <div class="param-label">Symbol</div>
+                            <input type="text" id="symbol-${i}" value="${s.symbol || ''}" style="flex: 1; padding: 8px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; color: #fff; font-family: monospace;">
+                        </div>
+                        <div class="param-control">
+                            <div class="param-label">Dependencies</div>
+                            <input type="text" id="deps-${i}" value="${depsStr}" placeholder="x,y,z" style="flex: 1; padding: 8px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; color: #fff; font-family: monospace;">
+                            <div class="param-value" style="color: #888; font-size: 12px;">arity = ${arity}</div>
+                        </div>
+                        <div class="param-control">
+                            <div class="param-label">Expression</div>
+                            <input type="text" id="expr-${i}" value="${s.expr}" placeholder="sin(x) + 0.5*sin(y*2)" style="flex: 1; padding: 8px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; color: #fff; font-family: monospace;">
+                        </div>
+                        <div class="param-control">
+                            <div class="param-label">Type (φ)</div>
+                            <select id="type-${i}" style="flex: 1; padding: 8px; background: #0a0a0a; border: 1px solid #333; border-radius: 4px; color: #fff;">
+                                ${typeOptions}
+                            </select>
+                            <div class="param-value" id="type-phase-${i}">${this.getPhaseForType(s.type).toFixed(2)}</div>
+                        </div>
+                        ${this.strings.length > 1 ? `
+                        <button id="remove-${i}" style="margin-top: 10px; padding: 8px 16px; background: #500; color: #fff; border: 1px solid #700; border-radius: 4px; cursor: pointer;">Remove</button>
+                        ` : ''}
+                    `;
+                    container.appendChild(editor);
+                    
+                    // Setup event listeners
+                    const symbolInput = document.getElementById(`symbol-${i}`);
+                    const depsInput = document.getElementById(`deps-${i}`);
+                    const exprInput = document.getElementById(`expr-${i}`);
+                    const typeSelect = document.getElementById(`type-${i}`);
+                    
+                    symbolInput.addEventListener('input', (e) => {
+                        s.symbol = e.target.value;
+                        // Rebuild name registry
+                        this.nameRegistry = {};
+                        this.strings.forEach(str => {
+                            if (!this.nameRegistry[str.symbol]) {
+                                this.nameRegistry[str.symbol] = {};
+                            }
+                            this.nameRegistry[str.symbol][str.deps.join(',')] = str;
+                        });
+                        this.setupEditors();
+                        this.updateSpec();
+                        this.render(this.t);
+                    });
+                    
+                    depsInput.addEventListener('change', (e) => {
+                        const depsStr = e.target.value.trim();
+                        s.deps = depsStr ? depsStr.split(',').map(d => d.trim()).filter(d => d) : ['t'];
+                        // Rebuild name registry
+                        this.nameRegistry = {};
+                        this.strings.forEach(str => {
+                            if (!this.nameRegistry[str.symbol]) {
+                                this.nameRegistry[str.symbol] = {};
+                            }
+                            this.nameRegistry[str.symbol][str.deps.join(',')] = str;
+                        });
+                        this.setupEditors();
+                        this.updateSpec();
+                        this.render(this.t);
+                    });
+                    
+                    exprInput.addEventListener('input', (e) => {
+                        s.expr = e.target.value;
+                        this.updateSpec();
+                        this.render(this.t);
+                    });
+                    
+                    typeSelect.addEventListener('change', (e) => {
+                        s.type = e.target.value;
+                        document.getElementById(`type-phase-${i}`).textContent = this.getPhaseForType(s.type).toFixed(2);
+                        this.updateSpec();
+                        this.render(this.t);
+                    });
+                    
+                    // Remove button
+                    const removeBtn = document.getElementById(`remove-${i}`);
+                    if (removeBtn) {
+                        removeBtn.addEventListener('click', () => {
+                            this.removeString(i);
+                        });
+                    }
+                });
+                
+                // Add string button
+                const addBtn = document.createElement('button');
+                addBtn.id = 'add-string';
+                addBtn.textContent = '+ Add String';
+                addBtn.style.cssText = 'margin-top: 15px; padding: 12px 24px; background: #333; color: #fff; border: 1px solid #555; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold;';
+                addBtn.addEventListener('click', () => {
+                    this.addString();
+                });
+                container.appendChild(addBtn);
+            }
+            
+            addString() {
+                const newIndex = this.strings.length;
+                const defaultType = Object.keys(this.types)[0];
+                const newString = {
+                    symbol: `string${newIndex}`,
+                    deps: ['t'],
+                    expr: 'sin(t)',
+                    type: defaultType
+                };
+                this.strings.push(newString);
+                
+                // Update name registry
+                if (!this.nameRegistry[newString.symbol]) {
+                    this.nameRegistry[newString.symbol] = {};
+                }
+                this.nameRegistry[newString.symbol][newString.deps.join(',')] = newString;
+                
+                this.setupEditors();
+                this.updateSpec();
+                this.render(this.t);
+            }
+            
+            removeString(index) {
+                if (this.strings.length <= 1) return;
+                this.strings.splice(index, 1);
+                this.setupEditors();
+                this.updateSpec();
+                this.render(this.t);
+            }
+            
+            updateSpec() {
+                // Generate unified SVG + Strings spec
+                let xml = '<?xml version="1.0"?>\n';
+                xml += '<svg xmlns="http://www.w3.org/2000/svg"\n';
+                xml += '     xmlns:feg="http://feg.video/strings"\n';
+                xml += '     viewBox="0 0 1920 1080">\n';
+                xml += '  <defs>\n';
+                xml += '    <feg:strings>\n';
+                this.strings.forEach((s, i) => {
+                    const depsStr = s.deps.join(',');
+                    xml += `      <feg:string symbol="${s.symbol}" deps="${depsStr}" expr="${s.expr}" type="${s.type}"/>\n`;
+                });
+                xml += '    </feg:strings>\n';
+                xml += '  </defs>\n';
+                xml += '</svg>';
+                
+                document.getElementById('live-spec-content').textContent = xml;
+                
+                // Generate SVG usage example
+                let svgExample = '<!-- Example: Using strings in SVG attributes -->\n';
+                svgExample += '<svg viewBox="0 0 1920 1080">\n';
+                
+                // Find example strings
+                const colorStrings = this.getStringsByType('color');
+                const shapeStrings = this.getStringsByType('shape');
+                const positionStrings = this.getStringsByType('position');
+                
+                if (colorStrings.length > 0) {
+                    const hue = colorStrings[0];
+                    const hueDeps = hue.deps.join(',');
+                    svgExample += `  <circle cx="960" cy="540" r="150"\n`;
+                    svgExample += `        fill="hsl(calc(${hue.symbol}(${hueDeps}) * 360), 80%, 50%)"/>\n`;
+                }
+                
+                if (shapeStrings.length > 0 && positionStrings.length > 0) {
+                    const radius = shapeStrings[0];
+                    const x = positionStrings[0];
+                    const radiusDeps = radius.deps.join(',');
+                    const xDeps = x.deps.join(',');
+                    svgExample += `  <circle cx="calc(960 + 200 * ${x.symbol}(${xDeps}))"\n`;
+                    svgExample += `        cy="540"\n`;
+                    svgExample += `        r="calc(150 + 40 * ${radius.symbol}(${radiusDeps}))"/>\n`;
+                }
+                
+                svgExample += '</svg>';
+                
+                document.getElementById('svg-example').textContent = svgExample;
+                
+                // Update code example with harmonic namespace
+                let code = '// Harmonic Type System: Each String is a Composed Type\n';
+                code += '// Each string definition creates a new type in the harmonic type lattice\n\n';
+                
+                // Group by symbol
+                const byName = {};
+                this.strings.forEach(s => {
+                    if (!byName[s.symbol]) byName[s.symbol] = [];
+                    byName[s.symbol].push(s);
+                });
+                
+                code += '// The Irreducible Algebra: String := (symbol, deps, expr)\n';
+                Object.keys(byName).forEach(symbol => {
+                    const family = byName[symbol];
+                    if (family.length > 1) {
+                        code += `// ${symbol} type family (${family.length} composed types):\n`;
+                        family.forEach(s => {
+                            const depsStr = s.deps.join(', ');
+                            code += `  ${symbol}(${depsStr}) := ${s.expr}\n`;
+                            code += `    // type: ${s.type}, arity: ${s.deps.length}\n`;
+                        });
+                    } else {
+                        const s = family[0];
+                        const depsStr = s.deps.join(', ');
+                        code += `  ${symbol}(${depsStr}) := ${s.expr}\n`;
+                        code += `    // type: ${s.type}, arity: ${s.deps.length}\n`;
+                    }
+                });
+                
+                code += '\n// The Three Rules:\n';
+                code += '// 1. A string is a named expression over dependency symbols\n';
+                code += '// 2. Each expression produces a new string-type\n';
+                code += '// 3. Strings unify by matching symbols; dispatch by matching deps\n';
+                
+                document.getElementById('code-example').textContent = code;
+                
+                // Update string info cards dynamically
+                const infoContainer = document.getElementById('string-info');
+                const timeCard = infoContainer.querySelector('#time').parentElement;
+                infoContainer.innerHTML = '';
+                infoContainer.appendChild(timeCard);
+                
+                // Add cards for each string
+                this.strings.forEach((s, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'info-card';
+                    const depsStr = s.deps.join(',');
+                    card.innerHTML = `
+                        <div class="info-label">${s.symbol}(${depsStr})</div>
+                        <div class="info-value" id="string${i}">0.00</div>
+                    `;
+                    infoContainer.appendChild(card);
+                });
+            }
+            
+            formatPhase(phi) {
+                if (Math.abs(phi) < 0.01) return '0.0';
+                if (Math.abs(phi - Math.PI) < 0.01) return 'π';
+                if (Math.abs(phi - Math.PI/2) < 0.01) return 'π/2';
+                if (Math.abs(phi - Math.PI/4) < 0.01) return 'π/4';
+                if (Math.abs(phi - 3*Math.PI/2) < 0.01) return '3π/2';
+                return phi.toFixed(3);
+            }
+            
+            // Evaluate string(i, t) - evaluates the expression
+            string(i, t) {
+                if (i < 0 || i >= this.strings.length) return 0;
+                const s = this.strings[i];
+                return this.evaluateString(s.symbol, s.deps, t);
+            }
+            
+            // Mix two strings (superposition)
+            mix(a, b, α) {
+                return α * a + (1 - α) * b;
+            }
+            
+            // Update visualization using type system
+            render(t) {
+                this.t = t;
+                
+                // Evaluate all strings using new (symbol, deps, expr) structure
+                const stringValues = this.strings.map((s, i) => {
+                    return this.evaluateString(s.symbol, s.deps, t);
+                });
+                
+                // Apply strings by type (many-to-many: multiple strings can affect same type)
+                
+                // Position type: affects path and circles
+                const positionStrings = this.getStringsByType('position');
+                if (positionStrings.length > 0) {
+                    const path = document.getElementById('stringPath');
+                    if (path) {
+                        const numPoints = 100;
+                        let pathData = '';
+                        const posString = positionStrings[0];
+                        const posIndex = this.strings.indexOf(posString);
+                        for (let i = 0; i <= numPoints; i++) {
+                            const x = (i / numPoints) * 1920;
+                            const sampleT = t + (i / numPoints) * 2 * Math.PI;
+                            const val = this.evaluateString(posString.symbol, posString.deps, sampleT);
+                            const y = this.types.position.transform(val);
+                            if (i === 0) {
+                                pathData += `M ${x},${y}`;
+                            } else {
+                                pathData += ` L ${x},${y}`;
+                            }
+                        }
+                        path.setAttribute('d', pathData);
+                    }
+                    
+                    // Update circles with position strings
+                    positionStrings.slice(0, 2).forEach((posString, idx) => {
+                        const posIndex = this.strings.indexOf(posString);
+                        const circle = document.getElementById(`stringCircle${idx + 1}`);
+                        if (circle) {
+                            const val = stringValues[posIndex] || 0;
+                            circle.setAttribute('cy', this.types.position.transform(val).toString());
+                        }
+                    });
+                }
+                
+                // Color type: affects gradient
+                const colorStrings = this.getStringsByType('color');
+                if (colorStrings.length > 0) {
+                    const gradStop1 = document.getElementById('gradStop1');
+                    const gradStop2 = document.getElementById('gradStop2');
+                    if (gradStop1 && gradStop2) {
+                        const colorString = colorStrings[0];
+                        const colorIndex = this.strings.indexOf(colorString);
+                        const val = stringValues[colorIndex] || 0;
+                        const color = this.types.color.transform(val);
+                        gradStop1.setAttribute('stop-color', color);
+                        gradStop2.setAttribute('stop-color', color.replace('50%', '30%'));
+                        
+                        // Also update offset based on shape type if available
+                        const shapeStrings = this.getStringsByType('shape');
+                        if (shapeStrings.length > 0) {
+                            const shapeString = shapeStrings[0];
+                            const shapeIndex = this.strings.indexOf(shapeString);
+                            const shapeVal = stringValues[shapeIndex] || 0;
+                            const offset = this.types.shape.transform(shapeVal);
+                            gradStop1.setAttribute('offset', `${Math.max(0, Math.min(1, offset)) * 100}%`);
+                            gradStop2.setAttribute('offset', `${Math.max(0, Math.min(1, 1 - offset)) * 100}%`);
+                        }
+                    }
+                }
+                
+                // Clip type: affects clip path
+                const clipStrings = this.getStringsByType('clip');
+                if (clipStrings.length > 0) {
+                    const clipCircle = document.getElementById('clipCircle');
+                    if (clipCircle) {
+                        const clipString = clipStrings[0];
+                        const clipIndex = this.strings.indexOf(clipString);
+                        const radius = this.types.clip.transform(stringValues[clipIndex] || 0);
+                        clipCircle.setAttribute('r', radius.toString());
+                    }
+                }
+                
+                // Shape type: affects gradient offset (already handled above) and other shape properties
+                const shapeStrings = this.getStringsByType('shape');
+                if (shapeStrings.length > 0 && colorStrings.length === 0) {
+                    // If no color strings, use shape for gradient offset
+                    const gradStop1 = document.getElementById('gradStop1');
+                    const gradStop2 = document.getElementById('gradStop2');
+                    if (gradStop1 && gradStop2) {
+                        const shapeString = shapeStrings[0];
+                        const shapeIndex = this.strings.indexOf(shapeString);
+                        const shapeVal = stringValues[shapeIndex] || 0;
+                        const offset = this.types.shape.transform(shapeVal);
+                        gradStop1.setAttribute('offset', `${Math.max(0, Math.min(1, offset)) * 100}%`);
+                        gradStop2.setAttribute('offset', `${Math.max(0, Math.min(1, 1 - offset)) * 100}%`);
+                    }
+                }
+                
+                // Draw waveform visualization: show all strings
+                const waveform = document.getElementById('waveform');
+                if (waveform) {
+                    waveform.innerHTML = '';
+                    const numWavePoints = 200;
+                    const colors = ['#00d4ff', '#00ff88', '#ff0088', '#ffaa00', '#aa00ff', '#00ffaa'];
+                    
+                    this.strings.forEach((s, i) => {
+                        let wavePath = '';
+                        const color = colors[i % colors.length];
+                        for (let j = 0; j <= numWavePoints; j++) {
+                            const x = (j / numWavePoints) * 1920;
+                            const sampleT = t + (j / numWavePoints) * 4 * Math.PI;
+                            const val = this.evaluateString(s.symbol, s.deps, sampleT);
+                            const y = 200 + (i * 80) + 50 * val;
+                            if (j === 0) {
+                                wavePath += `M ${x},${y}`;
+                            } else {
+                                wavePath += ` L ${x},${y}`;
+                            }
+                        }
+                        const wavePathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        wavePathEl.setAttribute('d', wavePath);
+                        wavePathEl.setAttribute('stroke', color);
+                        wavePathEl.setAttribute('stroke-width', '2');
+                        wavePathEl.setAttribute('fill', 'none');
+                        wavePathEl.setAttribute('opacity', '0.7');
+                        waveform.appendChild(wavePathEl);
+                    });
+                }
+                
+                // Update info displays generically
+                stringValues.forEach((val, i) => {
+                    const el = document.getElementById(`string${i}`);
+                    if (el) {
+                        el.textContent = val.toFixed(3);
+                    }
+                });
+                document.getElementById('time').textContent = t.toFixed(2) + 's';
+            }
+            
+            play() {
+                this.isPlaying = true;
+                this.startTime = performance.now() / 1000 - this.t;
+                document.getElementById('play-pause').textContent = '⏸ Pause';
+                
+                const animate = () => {
+                    if (!this.isPlaying) return;
+                    
+                    this.t = performance.now() / 1000 - this.startTime;
+                    this.render(this.t);
+                    
+                    this.animationFrame = requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+            
+            pause() {
+                this.isPlaying = false;
+                document.getElementById('play-pause').textContent = '▶ Play';
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                }
+            }
+            
+            reset() {
+                this.pause();
+                this.t = 0;
+                this.startTime = null;
+                this.render(0);
+            }
+        }
+        
+        // Initialize engine
+        const engine = new StringEngine();
+        engine.render(0);
+        
+        // Setup controls
+        document.getElementById('play-pause').addEventListener('click', () => {
+            if (engine.isPlaying) {
+                engine.pause();
+            } else {
+                engine.play();
+            }
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            engine.reset();
+        });
+    </script>
+</body>
+</html>
+
+
